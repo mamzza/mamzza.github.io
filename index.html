@@ -142,6 +142,10 @@ footer .logo{font-size:1.4rem;display:block;margin-bottom:4px}
 .field input,.field textarea{font:inherit;font-weight:400;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .seg button{padding:10px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font-weight:800}
+.wait{margin:14px 0 0;padding:10px 12px;border-radius:12px;background:var(--wood);font-size:.92rem}
+.wait b{color:var(--red)}
+.seg.pay{grid-template-columns:repeat(2,minmax(0,1fr))}.seg.pay button{font-size:.88rem;padding:10px 6px}
+.field select{font:inherit;font-weight:400;padding:10px 12px;border-radius:10px}
 .seg button[aria-pressed="true"]{border-color:var(--red);color:var(--red)}
 .note{font-size:.85rem;color:var(--muted);margin:8px 0 0}
 .warn{font-size:.88rem;color:var(--red);font-weight:700;margin:8px 0 0}
@@ -169,6 +173,7 @@ footer .logo{font-size:1.4rem;display:block;margin-bottom:4px}
       <p class="tag">Une pâte faite maison, le savoir-faire de maman.</p>
       <div class="xl">Toutes nos pizzas sont en <b>taille XL</b></div>
       <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Ouvert de 12h00 à 21h00</span></div>
+      <div class="status">⏱ Préparation à la commande : comptez 35 minutes minimum</div>
       <div class="cta">
         <a class="btn" href="#pizzas">Voir la carte et commander</a>
         <a class="btn ghost" href="tel:+262692451708">Appeler</a>
@@ -209,7 +214,7 @@ footer .logo{font-size:1.4rem;display:block;margin-bottom:4px}
     <div class="head"><h2>Infos pratiques</h2></div>
     <div class="infos">
       <div class="info"><small>Commandes</small><div class="phones num"><b>0692 45 17 08</b><b>0693 52 56 39</b></div><p>Appels et messages acceptés</p></div>
-      <div class="info"><small>Horaires</small><b class="num">12h00 – 21h00</b><p>Desserts à partir de 18h</p></div>
+      <div class="info"><small>Horaires</small><b class="num">12h00 – 21h00</b><p>Desserts à partir de 18h · attente 35 min minimum</p></div>
       <div class="info"><small>Livraison</small><b class="num">2,00 €</b><p>À partir de 18h00</p></div>
       <div class="info"><small>Paiement</small><b>Espèces et carte</b><p>La Vigie, Petite-Terre, Mayotte</p></div>
     </div>
@@ -239,13 +244,20 @@ footer .logo{font-size:1.4rem;display:block;margin-bottom:4px}
     <label class="field">Votre prénom<input id="cName" autocomplete="given-name" placeholder="Ex. Fatima"></label>
     <label class="field">Votre téléphone<input id="cPhone" type="tel" autocomplete="tel" placeholder="06 39 .. .. .."></label>
     <label class="field" id="addrField" hidden>Adresse de livraison<textarea id="cAddr" rows="2" placeholder="Quartier, rue, repère…"></textarea></label>
-    <label class="field">Heure souhaitée<input id="cTime" type="time" min="12:00" max="21:00"></label>
+    <p class="wait">⏱ Temps d'attente : <b>35 minutes minimum</b> entre votre commande et le retrait ou la livraison. Chaque pizza est préparée à la commande.</p>
+    <label class="field">Heure souhaitée<select id="cTime"></select></label>
+    <div class="field">Paiement</div>
+    <div class="seg pay" role="group" aria-label="Paiement">
+      <button id="payCash" data-pay="Espèces" aria-pressed="true">Espèces</button>
+      <button id="payCard" data-pay="Carte bancaire" aria-pressed="false">Carte bancaire</button>
+    </div>
+    <p class="note">Le paiement se fait au retrait ou à la livraison.</p>
     <div class="actions">
-      <a class="btn wa" id="sendWa" href="#" target="_blank" rel="noopener">Envoyer par WhatsApp</a>
+      <a class="btn wa" id="sendWa" href="#" target="_blank" rel="noopener">Envoyer ma commande par WhatsApp</a>
       <a class="btn ghost" id="sendSms" href="#">Envoyer par SMS</a>
       <button class="btn ghost" id="copyOrder">Copier la commande</button>
     </div>
-    <p class="note">Votre commande est confirmée quand Mam'zza vous répond. Vous pouvez aussi appeler le <b class="num">0692 45 17 08</b> ou le <b class="num">0693 52 56 39</b>.</p>
+    <p class="note">Une question ? Vous pouvez aussi appeler le <b class="num">0692 45 17 08</b> ou le <b class="num">0693 52 56 39</b>.</p>
   </div>
 </div>
 
@@ -327,8 +339,9 @@ function orderText(){
   if(v("cName"))t+=`\nNom : ${v("cName")}`;
   if(v("cPhone"))t+=`\nTéléphone : ${v("cPhone")}`;
   if(mode==="livraison"&&v("cAddr"))t+=`\nAdresse : ${v("cAddr")}`;
-  if(v("cTime"))t+=`\nHeure souhaitée : ${v("cTime").replace(":","h")}`;
-  return t+"\nPaiement : espèces ou carte. Merci !";
+  const ts=document.getElementById("cTime");
+  if(ts.selectedIndex>=0)t+=`\nHeure souhaitée : ${ts.options[ts.selectedIndex].text}`;
+  return t+`\nPaiement : ${pay}\nMerci !`;
 }
 
 function render(){
@@ -343,9 +356,8 @@ function render(){
   document.getElementById("modeEmporter").setAttribute("aria-pressed",mode==="emporter");
   document.getElementById("modeLivraison").setAttribute("aria-pressed",mode==="livraison");
   document.getElementById("addrField").hidden=mode!=="livraison";
-  const tv=document.getElementById("cTime").value;
-  const n=mayotteNow();const late=n.getHours()>=18;
-  document.getElementById("livWarn").hidden=!(mode==="livraison"&&(tv?tv<"18:00":!late));
+  document.getElementById("livWarn").hidden=true;
+  document.querySelectorAll("[data-pay]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.pay===pay));
   const txt=encodeURIComponent(orderText());
   document.getElementById("sendWa").href=`https://wa.me/${WA}?text=${txt}`;
   document.getElementById("sendSms").href=`sms:${SMS}?body=${txt}`;
@@ -356,10 +368,28 @@ document.getElementById("lines").addEventListener("click",e=>{
   l.q+=+b.dataset.d;if(l.q<=0)cart.splice(+b.dataset.q,1);save();render();
 });
 ["cName","cPhone","cAddr","cTime"].forEach(id=>document.getElementById(id).addEventListener("input",render));
-document.getElementById("modeEmporter").onclick=()=>{mode="emporter";render()};
-document.getElementById("modeLivraison").onclick=()=>{mode="livraison";render()};
+let pay="Espèces";
+document.querySelectorAll("[data-pay]").forEach(b=>b.onclick=()=>{pay=b.dataset.pay;render()});
+const PREP=35;
+const hm=m=>String(Math.floor(m/60)).padStart(2,"0")+"h"+String(m%60).padStart(2,"0");
+function fillTimes(){
+  const sel=document.getElementById("cTime"),prev=sel.value;
+  const n=mayotteNow(),now=n.getHours()*60+n.getMinutes();
+  const start=mode==="livraison"?1080:720,end=1260;
+  const first=mode==="livraison"?1080:720+PREP;
+  let from=Math.ceil((now+PREP)/5)*5,tomorrow=false;
+  if(from>end){from=first;tomorrow=true}
+  from=Math.max(from,first);
+  let opts=[];
+  if(!tomorrow&&now>=720&&now<end)opts.push(["asap",`Dès que possible (prête vers ${hm(from)})`]);
+  for(let m=from;m<=end;m+=15)opts.push([String(m),(tomorrow?"Demain ":now<start?"Aujourd'hui ":"")+hm(m)]);
+  sel.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+  if(opts.some(o=>o[0]===prev))sel.value=prev;
+}
+document.getElementById("modeEmporter").onclick=()=>{mode="emporter";fillTimes();render()};
+document.getElementById("modeLivraison").onclick=()=>{mode="livraison";fillTimes();render()};
 const sheet=document.getElementById("sheet");
-document.getElementById("openCart").onclick=()=>{render();sheet.hidden=false};
+document.getElementById("openCart").onclick=()=>{fillTimes();render();sheet.hidden=false};
 document.getElementById("closeCart").onclick=()=>sheet.hidden=true;
 sheet.addEventListener("click",e=>{if(e.target===sheet)sheet.hidden=true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")sheet.hidden=true});
@@ -370,7 +400,7 @@ document.getElementById("copyOrder").onclick=()=>{
 function fallbackCopy(t){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Commande copiée")}catch(e){toast("Sélectionnez et copiez le texte")}ta.remove()}
 let tt;function toast(m){let el=document.querySelector(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");document.body.appendChild(el)}el.textContent=m;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,1600)}
 
-renderMenu();status();render();setInterval(status,60000);
+renderMenu();status();fillTimes();render();setInterval(status,60000);
 </script>
 
 </body>
