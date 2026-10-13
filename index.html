@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta property="og:title" content="Mam'zza La Vigie">
+<meta property="og:description" content="Pizzas XL pâte maison à La Vigie, Petite-Terre. Livraison dès 18h.">
 <title>Mam'zza La Vigie</title>
 <meta name="description" content="Mam'zza, pizzeria à La Vigie (Petite-Terre, Mayotte). Pâte faite maison, toutes nos pizzas en taille XL. Commande par téléphone ou WhatsApp, livraison dès 18h.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +30,10 @@
   --bg:#17110f; --surface:#221917; --wood:#2b201c; --ink:#f7ede6; --muted:#b9a79c;
   --red:#ee2b30; --red-ink:#ffffff; --line:#3a2c27; --green:#3cc47a; --shadow:0 10px 30px rgba(0,0,0,.4); color-scheme:dark}
 
+[hidden]{display:none!important}
 *{box-sizing:border-box}
+body{margin:0}
+img{max-width:100%}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
 body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body);padding-inline:16px;padding-block:0 110px}
@@ -139,6 +149,9 @@ footer .logo{font-size:1.4rem;display:block;margin-bottom:4px}
 .empty{color:var(--muted);padding-block:18px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;z-index:50;font-size:.9rem}
 </style>
+</head>
+<body>
+
 
 <header class="top">
   <div class="wrap">
@@ -359,3 +372,6 @@ let tt;function toast(m){let el=document.querySelector(".toast");if(!el){el=docu
 
 renderMenu();status();render();setInterval(status,60000);
 </script>
+
+</body>
+</html>
