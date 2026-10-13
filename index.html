@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Caveat:wght@600&family=Figtree:wght@400;600;800&display=swap">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Restaurant","name":"Mam'zza","servesCuisine":"Pizza","priceRange":"€","telephone":"+262692451708","address":{"@type":"PostalAddress","addressLocality":"La Vigie, Petite-Terre","addressRegion":"Mayotte","addressCountry":"YT"},"openingHours":"Mo-Su 12:00-21:00","paymentAccepted":"Espèces, Carte bancaire","slogan":"Une pâte faite maison, le savoir-faire de maman."}
+{"@context":"https://schema.org","@type":"Restaurant","name":"Mam'zza","servesCuisine":"Pizza","priceRange":"€","telephone":"+262692451708","address":{"@type":"PostalAddress","addressLocality":"La Vigie, Petite-Terre","addressRegion":"Mayotte","addressCountry":"YT"},"openingHours":["Mo-Su 12:00-15:00","Mo-Su 18:00-21:30"],"paymentAccepted":"Espèces, Carte bancaire","slogan":"Une pâte faite maison, le savoir-faire de maman."}
 </script>
 <style>
 /* Layout: brush-lettered red header, menu as a "carte" of photo rows, sticky basket bar that sends the order by WhatsApp */
@@ -172,7 +172,7 @@ footer .logo{font-size:1.4rem;display:block;margin-bottom:4px}
       <h1>MAM'<span>ZZA</span></h1>
       <p class="tag">Une pâte faite maison, le savoir-faire de maman.</p>
       <div class="xl">Toutes nos pizzas sont en <b>taille XL</b></div>
-      <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Ouvert de 12h00 à 21h00</span></div>
+      <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Ouvert de 12h00 à 15h00 et de 18h00 à 21h30</span></div>
       <div class="status">⏱ Préparation à la commande : comptez 35 minutes minimum</div>
       <div class="cta">
         <a class="btn" href="#pizzas">Voir la carte et commander</a>
@@ -214,7 +214,7 @@ footer .logo{font-size:1.4rem;display:block;margin-bottom:4px}
     <div class="head"><h2>Infos pratiques</h2></div>
     <div class="infos">
       <div class="info"><small>Commandes</small><div class="phones num"><b>0692 45 17 08</b><b>0693 52 56 39</b></div><p>Appels et messages acceptés</p></div>
-      <div class="info"><small>Horaires</small><b class="num">12h00 – 21h00</b><p>Desserts à partir de 18h · attente 35 min minimum</p></div>
+      <div class="info"><small>Horaires</small><b class="num">12h00 – 15h00<br>18h00 – 21h30</b><p>Desserts à partir de 18h · attente 35 min minimum</p></div>
       <div class="info"><small>Livraison</small><b class="num">2,00 €</b><p>À partir de 18h00</p></div>
       <div class="info"><small>Paiement</small><b>Espèces et carte</b><p>La Vigie, Petite-Terre, Mayotte</p></div>
     </div>
@@ -324,9 +324,10 @@ document.getElementById("drinkAdd").onclick=()=>add("Canette "+document.getEleme
 
 function mayotteNow(){const d=new Date();return new Date(d.getTime()+d.getTimezoneOffset()*60000+3*3600000)}
 function status(){
-  const n=mayotteNow(),m=n.getHours()*60+n.getMinutes(),open=m>=720&&m<1260;
-  document.getElementById("dot").classList.toggle("on",open);
-  document.getElementById("statusTxt").textContent=open?(m>=1080?"Ouvert maintenant · livraison en cours jusqu'à 21h":"Ouvert maintenant · livraison dès 18h"):"Fermé · ouvert tous les jours de 12h00 à 21h00";
+  const n=mayotteNow(),m=n.getHours()*60+n.getMinutes();
+  const lunch=m>=720&&m<900,eve=m>=1080&&m<1290;
+  document.getElementById("dot").classList.toggle("on",lunch||eve);
+  document.getElementById("statusTxt").textContent=lunch?"Ouvert jusqu'à 15h00 · livraison le soir dès 18h":eve?"Ouvert jusqu'à 21h30 · livraison en cours":m<720?"Fermé · ouvre à 12h00":m<1080?"Fermé · réouvre à 18h00":"Fermé · ouvre à 12h00";
 }
 
 function orderText(){
@@ -371,18 +372,20 @@ document.getElementById("lines").addEventListener("click",e=>{
 let pay="Espèces";
 document.querySelectorAll("[data-pay]").forEach(b=>b.onclick=()=>{pay=b.dataset.pay;render()});
 const PREP=35;
+const SERVICES=[[720,900],[1080,1290]];
 const hm=m=>String(Math.floor(m/60)).padStart(2,"0")+"h"+String(m%60).padStart(2,"0");
 function fillTimes(){
   const sel=document.getElementById("cTime"),prev=sel.value;
   const n=mayotteNow(),now=n.getHours()*60+n.getMinutes();
-  const start=mode==="livraison"?1080:720,end=1260;
-  const first=mode==="livraison"?1080:720+PREP;
-  let from=Math.ceil((now+PREP)/5)*5,tomorrow=false;
-  if(from>end){from=first;tomorrow=true}
-  from=Math.max(from,first);
+  const wins=mode==="livraison"?[[1080,1290]]:SERVICES;
+  const earliest=Math.ceil((now+PREP)/5)*5;
+  const build=min=>{const r=[];for(const [a,b] of wins){let m=Math.max(a+PREP,min);for(;m<=b;m+=15)r.push(m)}return r};
+  let slots=build(earliest),tomorrow=false;
+  if(!slots.length){slots=build(0);tomorrow=true}
+  const openNow=SERVICES.some(([a,b])=>now>=a&&now<b);
   let opts=[];
-  if(!tomorrow&&now>=720&&now<end)opts.push(["asap",`Dès que possible (prête vers ${hm(from)})`]);
-  for(let m=from;m<=end;m+=15)opts.push([String(m),(tomorrow?"Demain ":now<start?"Aujourd'hui ":"")+hm(m)]);
+  if(!tomorrow&&openNow&&slots[0]<=earliest+5)opts.push(["asap",`Dès que possible (prête vers ${hm(slots[0])})`]);
+  for(const m of slots)opts.push([String(m),(tomorrow?"Demain ":"")+hm(m)]);
   sel.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
   if(opts.some(o=>o[0]===prev))sel.value=prev;
 }
